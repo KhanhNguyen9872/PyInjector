@@ -10,11 +10,13 @@ bool SDK::InitCPython()
 {
     HMODULE hPython = NULL;
     const char* python_mods[] = {
-        "Python311.dll",
-        "Python310.dll",
-        "Python39.dll",
-        "Python38.dll",
-        "Python37.dll",
+        "python312.dll",
+        "python311.dll",
+        "python310.dll",
+        "python39.dll",
+        "python38.dll",
+        "python37.dll",
+        "python36.dll",
     };
     for (size_t i = 0; !hPython && i < (sizeof(python_mods) / sizeof(python_mods[0])); ++i) {
         hPython = ::GetModuleHandleA(python_mods[i]);

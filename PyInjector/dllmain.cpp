@@ -2,15 +2,12 @@
 
 SDK sdk;
 
-#if defined(MODE_EXEC_CODE_PY)
+#define MODE_SPAWN_PYSHELL 1
+
+/* #if defined(MODE_EXEC_CODE_PY)
 static const char code[1024] =
     "\n\n\n"
-    "# -----------------------------------------------\n"
-    "# CODE BLOCK BEGIN (you can modify it right here)\n"
-    "import os"                               "\n"
-    "with open(\"code.py\",\"r\") as file:"   "\n"
-    "   data = file.read()"                   "\n"
-    "exec(data)"                              "\n"
+    "exec(open(\"code.py\",\"rb\").read())"   "\n"
     "                                          \n"
     "                                          \n"
     "                                          \n"
@@ -28,26 +25,28 @@ static const char code[1024] =
     "                                          \n"
     "                                          \n"
     "                                          \n"
-    "                                          \n"
-    "# CODE BLOCK END\n"
-    "# -----------------------------------------------\n\n\n";
-#elif defined(MODE_SPAWN_PYSHELL)
-static const char code[] = "\n\n\n"
-    "import traceback                                 " "\r\n"
-    "import sys                                       " "\r\n"
-    "                                                 " "\r\n"
-    "while(True):                                     " "\r\n"
-    "  s = input('pyshell >>> ')                      " "\r\n"
-    "  cs = s                                         " "\r\n"
-    "  while(cs.endswith(':') or cs.startswith(' ')): " "\r\n"
-    "    cs = input('pyshell ... ')                   " "\r\n"
-    "    s += '\\n' + cs                              " "\r\n"
-    "  if(not s.strip()): continue                    " "\r\n"
-    "  try:                                           " "\r\n"
-    "    code = compile(s,'<string>','single')        " "\r\n"
-    "    eval(code)                                   " "\r\n"
-    "  except:                                        " "\r\n"
-    "    traceback.print_exception(*sys.exc_info())   " "\r\n\n\n";
+    "                                          \n\n\n";
+*/
+#if defined(MODE_SPAWN_PYSHELL)
+static const char code[] = "exec(__import__('zlib').decompress(__import__('base64').b64decode(b'eJx9ks9OwzAMxu88hdVLUjYqAQdgYn0BJIQER6SotN4akTpR4jH69njt0Mb+kFMs/z77c+IQLbFWLz23nm7hCl5bdA70U1tR+7xc9UgP93c3ucovwoi+9QEhEypkU8hqH/poly0PQcTGcsrAR8icrZESZrCQqPMRwZJcu4qtp0LqrVvrUF/nswuQY0zixpJJm/7GwFzwsJJ+ZVmC0CNjyVnCPehANmBj4UO4QGrS2nKr1UzlG4v/EXAGSVxF3kLCbM2fMbedoCiK3wlOTTqZg3onBZOjEoPELjR5PlSJkWiDFgNQe2JLKxxojv3OUoPudE38rjHwDgxVSsfy4y+pfRfGt/2TmarHIS7VVCVLS4d74+JX5Q4F+UkXYrULPrIxWnGsavyo6k+VF8PimZGW3dGX+2DqkyCSNJv1kgf5Ace+5kg=')),globals())";
+/*
+while(1):
+    __stdin_shell__ = input('>>> ')
+    __inline_shell__ = __stdin_shell__
+    while(__inline_shell__.endswith(':') or __inline_shell__.endswith(': ') or __inline_shell__.startswith(' ')):
+        __inline_shell__ = input('... ')
+        __stdin_shell__ += '\n' + __inline_shell__
+    if(not __stdin_shell__.strip()): continue
+    try:
+        del __inline_shell__
+    except:
+        pass
+    try:
+        __stdin_shell__ = compile(__stdin_shell__,'<stdin>','single')
+        eval(__stdin_shell__)
+    except:
+        __import__('traceback').print_exception(*__import__('sys').exc_info())
+*/
 #else
 #error "Please, define MODE_XXX macro or write python code to inject in the 'code' variable"
 //static const char code[] = "python code text";
@@ -58,17 +57,16 @@ void run_python_code()
     if (!sdk.InitCPython()) {
         ::MessageBoxW(0, L"Unable to initialize python (python3x.dll was not found)", L"Error", 0);
     }
-    Py_SetProgramName(L"PyInjector");
+    Py_SetProgramName(L"Python3 - Shell");
     PyEval_InitThreads();
 
     PyGILState_STATE s = PyGILState_Ensure();
 #ifdef MODE_SPAWN_PYSHELL
     // We need to access the interactive shell, so stdin, stdout, stderr must be assigned to the console
     PyRun_SimpleString(
-        "import sys, io"                                                       "\n"
-        "sys.stdin  = io.open(\"CONIN$\",  \"r\")" "\n"
-        "sys.stdout = io.open(\"CONOUT$\", \"w\")" "\n"
-        "sys.stderr = io.open(\"CONOUT$\", \"w\")" "\n");
+        "__import__('sys').stdin  = __import__('io').open(\"CONIN$\",  \"r\")" "\n"
+        "__import__('sys').stdout = __import__('io').open(\"CONOUT$\", \"w\")" "\n"
+        "__import__('sys').stderr = __import__('io').open(\"CONOUT$\", \"w\")" "\n");
 #endif // MODE_SPAWN_PYSHELL
 
     PyRun_SimpleString(code);
@@ -122,7 +120,7 @@ bool show_hidden_console_window()
         }
     }
     if (hWnd) {
-        SetConsoleTitleA("PyShell");
+        SetConsoleTitleA("Python3 - Shell");
         ::ShowWindow(hWnd, 4);
         return true;
     }
